@@ -58,7 +58,7 @@ def reset_mode(orig_mode):
 
 def get_material_data(mesh = None):
     orig_mode = None
-    
+
     try:
         faces = mesh.faces
     except Exception as msg:
@@ -82,13 +82,13 @@ def get_material_data(mesh = None):
 def cache_data(ordered_hex_vertices, hex_mat_new):
     """ Retain information of original mesh.
 
-    When a mesh comes from Continutiy we do not want to lose that information, 
+    When a mesh comes from Continutiy we do not want to lose that information,
     so we will store it here.  That information is:
     number of elements
     which nodes are connected to which elements
     number of materials
     """
-        
+
     mesh, orig_mode = get_active_mesh()
 
     # Create a property to store the original mesh information
@@ -117,11 +117,11 @@ def cache_data(ordered_hex_vertices, hex_mat_new):
     # way to have the data serialized in a blend file
     mesh.cached_data_json = json.dumps(cached_data)
     mesh.update()
-    
+
     # XXX Leaving for reference should we run into problems with larger meshes
     '''
-    # the mesh properties class has problems when the length of an array 
-    # is longer than about 10,000 elements, so I break up the material list 
+    # the mesh properties class has problems when the length of an array
+    # is longer than about 10,000 elements, so I break up the material list
     # into lists of 10,000 and concatenate them in ReloadHex()
     numMatLists = (int(len(hex_mat_new)) / 10000) + 1     # floor( length / 10000 ) + 1
     for matListNumber in range(numMatLists):
@@ -133,7 +133,7 @@ def cache_data(ordered_hex_vertices, hex_mat_new):
     print("cached data for %d hexes" % len(ordered_hex_vertices))
 
 
-def set_mat_data_hex(matList, new_cube_faces, mesh = None, subdivided=True, 
+def set_mat_data_hex(matList, new_cube_faces, mesh = None, subdivided=True,
                      existing_mats = None):
 
     if mesh is None:
@@ -171,7 +171,7 @@ def set_mat_data_hex(matList, new_cube_faces, mesh = None, subdivided=True,
         # if c_face in facesInVerts:
         c_Mat = nMatList[int(i/6)]
         # else:
-        if(faces[faces_in_verts_dict["%s" % c_face]].material_index == 0 or 
+        if(faces[faces_in_verts_dict["%s" % c_face]].material_index == 0 or
             (faces[faces_in_verts_dict["%s" % c_face]].material_index > c_Mat and c_Mat != 0)):
             faces[faces_in_verts_dict["%s" % c_face]].material_index = c_Mat
 
@@ -213,7 +213,7 @@ def add_new_data(verts_new, edges_keys_index, faces_keys_index, cubes_verts_inde
         new_cube_faces.append([int(value) for value in cube[:4]])
         full_new_cube_faces.append(new_cube_faces[-1])
         check_for_dups(new_cube_faces, unique_cubes)
-        
+
         new_cube_faces.append([int(value) for value in cube[4:]])
         full_new_cube_faces.append(new_cube_faces[-1])
         check_for_dups(new_cube_faces, unique_cubes)
@@ -241,7 +241,7 @@ def add_new_data(verts_new, edges_keys_index, faces_keys_index, cubes_verts_inde
 
         mesh.update()
 
-        # create the new mesh and make it active 
+        # create the new mesh and make it active
         obj = bpy.data.objects.new(mesh_name, mesh)
         bpy.context.scene.objects.link(obj)
         bpy.context.scene.objects.active = obj
@@ -286,7 +286,7 @@ def add_new_data(verts_new, edges_keys_index, faces_keys_index, cubes_verts_inde
             # add the last three verts to create a new face
             if face_counter == 3:
                 faces.ensure_lookup_table()
-                faces.new((verts[i] for i in range(-3,0))) 
+                faces.new((verts[i] for i in range(-3,0)))
                 faces.ensure_lookup_table()
                 face_counter = 0
         verts.ensure_lookup_table()
@@ -369,55 +369,55 @@ def get_boundary_data(cubes, mesh = None):
 
 
 def contiguous_regions(cubes, HexMat):
-    
+
     topologies = np.unique(HexMat)
     tot_topologies = len(topologies)
     HexMatNew = [None for val in HexMat]
-    final_index_lists = []    
-    
+    final_index_lists = []
+
     for topo_num in topologies:
         # get indices of hexes that are in the current region
         curr_topo_hex_indices = [ind for ind, val in enumerate(HexMat) if val == topo_num]
         curr_topo_node_lists = [cubes[ind][:] for ind, val in enumerate(HexMat) if val == topo_num ]
-        
+
         # initialize remaining topo indices to curr topo hex indices
         remaining_topo_indices = curr_topo_hex_indices[:]
         one_topos_groups = []
         curr_topo_nodes = []
-        
+
         #~ print "curr_topo_hex_indices = ", curr_topo_hex_indices
         #~ print "curr topo node lists = ", curr_topo_node_lists
-        
+
         curr_topo_it = 0
         continueLoop1 = True
         while continueLoop1:
-            
+
             continueLoop2 = True
             initialized_elem = remaining_topo_indices.pop(0)
             one_topos_groups.append([])
             one_topos_groups[curr_topo_it].append(initialized_elem)
             curr_topo_nodes.append(list(cubes[initialized_elem][:]))
-            
+
             while continueLoop2:
 
                 #~ print "one_topos_groups = ", one_topos_groups
-                
+
                 init_length = len(one_topos_groups[curr_topo_it])
-                
+
                 #~ print "init length = ", init_length
                 #~ print "curr topo it = ", curr_topo_it
-                
+
                 #~ print "remaining topo indices = ", remaining_topo_indices
                 indices_to_remove = []
-                
+
                 for ind in remaining_topo_indices:
                     #~ print "ind = ", ind
-                    
+
                     curr_elem_nodes = cubes[ind][:]
                     #~ print "curr elem nodes = ", curr_elem_nodes
                     #~ print "curr topo nodes = ", curr_topo_nodes[curr_topo_it]
                     #~ print [val in curr_topo_nodes[curr_topo_it] for val in curr_elem_nodes]
-                    
+
                     if any([val in curr_topo_nodes[curr_topo_it] for val in curr_elem_nodes]):
                         if ind not in one_topos_groups[curr_topo_it]:
                             #~ print "ind in add= ", ind
@@ -425,23 +425,23 @@ def contiguous_regions(cubes, HexMat):
                             curr_topo_nodes[curr_topo_it].extend(curr_elem_nodes)
                             curr_topo_nodes[curr_topo_it] = list(set(curr_topo_nodes[curr_topo_it]))
                             indices_to_remove.append(ind)
-                        
+
                     #~ print "one topo groups = ", one_topos_groups
                     #~ print "curr topo nodes = ", curr_topo_nodes
-                
+
                 for val in indices_to_remove:
                     remaining_topo_indices.remove(val)
-                
+
                 if init_length == len(one_topos_groups[curr_topo_it]): #no change
                     #~ print "final one topo group = ", one_topos_groups
                     continueLoop2 = False
-            
+
             curr_topo_it += 1
             if remaining_topo_indices == []:
                 continueLoop1 = False
-                
+
         final_index_lists.append(one_topos_groups)
-    
+
     # find the total number of new topology regions
     counter = 0
     for instance in final_index_lists:
@@ -453,61 +453,61 @@ def contiguous_regions(cubes, HexMat):
             counter2 += 1
             for ele_ind in region:
                 HexMatNew[ele_ind] = counter2-1
-    # currently this does not preserve old topology region numbers... 
+    # currently this does not preserve old topology region numbers...
     # maybe add this later if we need it
     return HexMatNew
 
 
 def contiguous_regions(cubes, HexMat):
-    
+
     topologies = np.unique(HexMat)
     tot_topologies = len(topologies)
     HexMatNew = [None for val in HexMat]
-    final_index_lists = []    
-    
+    final_index_lists = []
+
     for topo_num in topologies:
         #get indices of hexes that are in the current region
         curr_topo_hex_indices = [ind for ind, val in enumerate(HexMat) if val == topo_num]
         curr_topo_node_lists = [cubes[ind][:] for ind, val in enumerate(HexMat) if val == topo_num ]
-        
+
         #initialize remaining topo indices to curr topo hex indices
         remaining_topo_indices = curr_topo_hex_indices[:]
         one_topos_groups = []
         curr_topo_nodes = []
-        
+
         #~ print "curr_topo_hex_indices = ", curr_topo_hex_indices
         #~ print "curr topo node lists = ", curr_topo_node_lists
-        
+
         curr_topo_it = 0
         continueLoop1 = True
         while continueLoop1:
-            
+
             continueLoop2 = True
             initialized_elem = remaining_topo_indices.pop(0)
             one_topos_groups.append([])
             one_topos_groups[curr_topo_it].append(initialized_elem)
             curr_topo_nodes.append(list(cubes[initialized_elem][:]))
-            
+
             while continueLoop2:
 
                 #~ print "one_topos_groups = ", one_topos_groups
-                
+
                 init_length = len(one_topos_groups[curr_topo_it])
-                
+
                 #~ print "init length = ", init_length
                 #~ print "curr topo it = ", curr_topo_it
-                
+
                 #~ print "remaining topo indices = ", remaining_topo_indices
                 indices_to_remove = []
-                
+
                 for ind in remaining_topo_indices:
                     #~ print "ind = ", ind
-                    
+
                     curr_elem_nodes = cubes[ind][:]
                     #~ print "curr elem nodes = ", curr_elem_nodes
                     #~ print "curr topo nodes = ", curr_topo_nodes[curr_topo_it]
                     #~ print [val in curr_topo_nodes[curr_topo_it] for val in curr_elem_nodes]
-                    
+
                     if any([val in curr_topo_nodes[curr_topo_it] for val in curr_elem_nodes]):
                         if ind not in one_topos_groups[curr_topo_it]:
                             #~ print "ind in add= ", ind
@@ -515,23 +515,23 @@ def contiguous_regions(cubes, HexMat):
                             curr_topo_nodes[curr_topo_it].extend(curr_elem_nodes)
                             curr_topo_nodes[curr_topo_it] = list(set(curr_topo_nodes[curr_topo_it]))
                             indices_to_remove.append(ind)
-                        
+
                     #~ print "one topo groups = ", one_topos_groups
                     #~ print "curr topo nodes = ", curr_topo_nodes
-                
+
                 for val in indices_to_remove:
                     remaining_topo_indices.remove(val)
-                
+
                 if init_length == len(one_topos_groups[curr_topo_it]): #no change
                     #~ print "final one topo group = ", one_topos_groups
                     continueLoop2 = False
-            
+
             curr_topo_it += 1
             if remaining_topo_indices == []:
                 continueLoop1 = False
-                
+
         final_index_lists.append(one_topos_groups)
-    
+
     #find the total number of new topology regions
     counter = 0
     for instance in final_index_lists:
@@ -550,7 +550,7 @@ def contiguous_regions(cubes, HexMat):
 def find_hex(selectionOnly = False, verts = None):
 
     # created by Matt Gonzales 2011
-    start_time = time.time() 
+    start_time = time.time()
     mesh, orig_mode = get_active_mesh()
 
     if selectionOnly:
@@ -564,7 +564,7 @@ def find_hex(selectionOnly = False, verts = None):
         # Get selected edge and polygon objects
         edges = [e for e in mesh.edges if e.select]
         faces = [p for p in mesh.polygons if p.select]
-            
+
         # Seems like we're getting ALL objects, not just selected ones
         nboolSelected = [vert in verts for vert in range(len(mesh.vertices))]
         vertSel_map = list(np.cumsum(np.array(nboolSelected))-1)
@@ -594,7 +594,7 @@ def find_hex(selectionOnly = False, verts = None):
     faces_edges = [[] for a in range(len(faces))]
     #~ print "faces' edges"
     now = time.time()
-    
+
     # make a lookup for the mesh edge_keys
     mesh_edge_keys_dict = {}
     for ind, keys in enumerate(mesh.edge_keys):
@@ -708,7 +708,7 @@ def find_hex(selectionOnly = False, verts = None):
                 ## query to see if any edges are shared between face and face2
                 # if [val for val in curr_face_edge_list if val in curr_face_edge_list2] != []:
                     # faces_neighboring_faces[face].append(face2)
-    
+
     faces_edges = [set(myList) for myList in faces_edges]
     for ind1,face1 in enumerate(faces):
         for ind2,face2 in enumerate(faces):
@@ -726,7 +726,7 @@ def find_hex(selectionOnly = False, verts = None):
     #return a unique list
     faces_neighbor2 = [[] for a in range(len(faces))]
     one_neighbor_list = [[] for a in range(len(faces))]
-        
+
     for ind,face in enumerate(faces):
 
         curr_face_neighbor_list = faces_neighboring_faces[ind]
@@ -906,7 +906,7 @@ def find_hex(selectionOnly = False, verts = None):
         first_four_verts = []
         if selectionOnly:
             for vert in faces[selected_faces.index(curr_first_face)].vertices:
-                first_four_verts.append(vert)            
+                first_four_verts.append(vert)
         else:
             for vert in faces[curr_first_face].vertices:
                 first_four_verts.append(vert)
@@ -925,7 +925,7 @@ def find_hex(selectionOnly = False, verts = None):
         vertex_position2 = first_four_verts[1]
         vertex_position3 = first_four_verts[2]
         vertex_position4 = first_four_verts[3]
-        
+
         if selectionOnly:
             pos5_vertex = [x for x in remaining_four_verts if x in verts_OneNeighbor[selected_verts.index(vertex_position1)]]
             pos6_vertex = [y for y in remaining_four_verts if y in verts_OneNeighbor[selected_verts.index(vertex_position2)]]
@@ -936,7 +936,7 @@ def find_hex(selectionOnly = False, verts = None):
             pos6_vertex = [y for y in remaining_four_verts if y in verts_OneNeighbor[vertex_position2]]
             pos7_vertex = [z for z in remaining_four_verts if z in verts_OneNeighbor[vertex_position3]]
             pos8_vertex = [a for a in remaining_four_verts if a in verts_OneNeighbor[vertex_position4]]
-            
+
         #~ print "pos5 vert = ", pos5_vertex
         #~ print "pos6 vert = ", pos6_vertex
         #~ print "pos7 vert = ", pos7_vertex
@@ -952,25 +952,25 @@ def find_hex(selectionOnly = False, verts = None):
     now = time.time()-now
     #~ print "time: %.5f" %(now)
     print ("Found %s hexes! \n\nFinding contiguous material regions..." % len(ordered_hex_vertices))
-    
+
     #find out whether there are any non-intesecting regions that belong to the same labeled topology region
     #and separate them
     HexMatNew = contiguous_regions(list(ordered_hex_vertices), HexMat)
-    
+
     print("Harmonizing topology regions...")
-    
+
     #find verts and put them into an array
     verts_array = np.zeros([len(mesh.vertices),3])
     for ind, vert in enumerate(mesh.vertices):
         verts_array[ind,:] = vert.co
-    
+
     #harmonize hexes
     ordered_hex_vertices = harmonize_topo(ordered_hex_vertices,verts_array,HexMatNew)
-    
+
     #save the elems and mats so you don't have to find every time that you do something
     if not selectionOnly:
         cache_data(ordered_hex_vertices, HexMatNew)
-    
+
     print("\nFINISHED FIND HEX!")
 
     reset_mode(orig_mode)
@@ -988,7 +988,7 @@ def delete_all(mesh_name):
             ob.select = True
         else:
             ob.select = False
-            
+
     bpy.ops.object.delete()
 
     try:
@@ -999,14 +999,14 @@ def delete_all(mesh_name):
 
 def delete_mesh():
     ''' Deletes the elements of the mesh'''
-    
+
     mesh, b_mesh = get_active_mesh_and_bmesh()
     bmesh.ops.delete(b_mesh, geom=b_mesh.faces, context=6)
     bmesh.ops.delete(b_mesh, geom=b_mesh.verts, context=6)
 
     # Show the updates in the viewport
-    bmesh.update_edit_mesh(mesh, True)     
-    
+    bmesh.update_edit_mesh(mesh, True)
+
 
 def write_pickle(file_id, **data):
     return pickle.dump(data, file_id)
@@ -1060,7 +1060,7 @@ def write_out_vertices(filename = None):
     except Exception as msg:
         print("Error getting vertices: %" % msg)
         return {'CANCELLED'}, None
-    
+
     # === Header ===
 
     try:
@@ -1096,7 +1096,7 @@ def write_out_vertices(filename = None):
                       'Field 7':'FieldVec3_Var7','Field 8':'FieldVec3_Var8','Field 9':'FieldVec3_Var9',
                       'Field 10':'FieldVec4_Var10','Field 11':'FieldVec4_Var11','Field 12':'FieldVec4_Var12',
                       'Field 13':'FieldVec5_Var13','Field 14':'FieldVec5_Var14','Field 15':'FieldVec5_Var15'}
-        # 
+        #
         for k in field_name:
             vert_string = ('\t%s_val' % field_dict[k])
         vert_string += ('\tLabel\tNodes\n')
@@ -1111,7 +1111,7 @@ def write_out_vertices(filename = None):
             vert_string += ('%.6f\t%.6f\t%.6f' % (tuple(v.co)))
             # CV: Need to figure a way to get weights of selected vertex group (weight paint layer).
             # When weight painting, Blender only includes painted vertices in the vertex group.
-            # If a vertex does not belong to the weight paint group, it's default value should 
+            # If a vertex does not belong to the weight paint group, it's default value should
             # be set to 0 when written to the output string.
             # An alternative is to create a vertex group (weight paint layer) that includes all
             # vertices; all vertices need to be painted/initialized with zero weight so that
@@ -1129,7 +1129,7 @@ def write_out_vertices(filename = None):
         myfile = open(filename, 'w')
         myfile.write(vert_string)
         myfile.close()
-        print("Successfully exported %s" % filename) 
+        print("Successfully exported %s" % filename)
 
     reset_mode(orig_mode)
     return {'FINISHED'}, vert_string
@@ -1155,7 +1155,7 @@ def compute_write_out_vertex_weights(context, filename = None):
     except Exception as msg:
         print("Error getting vertex weights: %" % msg)
         return {'CANCELLED'}, None
-    
+
     try:
         hex_scene = context.scene.hexblender
     except Exception as msg:
@@ -1186,7 +1186,7 @@ def compute_write_out_vertex_weights(context, filename = None):
         myfile = open(filename, 'w')
         myfile.write(vertweight_string)
         myfile.close()
-        print("Successfully exported %s" % filename) 
+        print("Successfully exported %s" % filename)
 
     reset_mode(orig_mode)
     return {'FINISHED'}, vertweight_string
@@ -1202,7 +1202,7 @@ def write_out_3d_elements(filename = None):
 
     # Write headers
     elem_string = 'Node_0_Val\tNode_1_Val\tNode_2_Val\tNode_3_Val\tNode_4_Val\tNode_5_val\tNode_6_Val\tNode_7_Val\tLabel\tElement\n'
-    
+
     # Write elements
     for num_elem, elem_verts in enumerate(cubes):
         for v in elem_verts:
@@ -1213,7 +1213,7 @@ def write_out_3d_elements(filename = None):
         myfile = open(filename, 'w')
         myfile.write(elem_string)
         myfile.close()
-        print("Successfully exported %s" % filename) 
+        print("Successfully exported %s" % filename)
 
     reset_mode(orig_mode)
     return {'FINISHED'}, elem_string
@@ -1244,7 +1244,7 @@ def compute_write_hermite_3d_derivs(context, filename = None):
             myfile = open(filename, 'w')
             myfile.write(deriv_string)
             myfile.close()
-            print("Successfully exported %s" % filename) 
+            print("Successfully exported %s" % filename)
             return None
 
         return deriv_string
@@ -1260,7 +1260,7 @@ def compute_write_hermite_3d_derivs(context, filename = None):
     loadAdjustedNodes = False
 
     # We have to do subdivision if filename is None, as that indicates
-    # that we are exporting a bundle file and that requires doing the 
+    # that we are exporting a bundle file and that requires doing the
     # subdivision
     subdiv_type = int(hex_scene.hexblender_properties.export_subdiv_types)
     if subdiv_type > 0 or filename is None:
@@ -1277,7 +1277,7 @@ def compute_write_hermite_3d_derivs(context, filename = None):
             eNN.append([hex[0],hex[1],hex[3],hex[2],hex[4],hex[5],hex[7],hex[6]])
         eNN = np.array(eNN)
         nNN = np.load(dirName + 'adjustedNodes.npy')
-    
+
     if not loadAdjustedNodes and not useExistingNodes:
         mesh, orig_mode = get_active_mesh()
         cubes, matList = get_cached_data(mesh)
@@ -1294,22 +1294,22 @@ def compute_write_hermite_3d_derivs(context, filename = None):
         cubes = np.array(cubes)
         n = np.array(n)
 
-        # by default, default is the totality of all material numbers, 
+        # by default, default is the totality of all material numbers,
         # and the subdivision nor regularization are done piecewise
         # this here is an internal switch
 
         # Now getting priorities from the GUI, but of course
         # people can still overwrite/change them here should they
-        # want.  
-        interpPriorities = get_priorities(
-            hex_scene.hexblender_properties.interp_priorities)
+        # want.
+        #interpPriorities = get_priorities(hex_scene.hexblender_properties.interp_priorities)
 
         # Example settings
+        interpPriorities = [[0, 1],[2, 3, 4, 5]]
         #interpPriorities = [np.unique(matList).tolist()] # default
         #interpPriorities = [[0,1,2,3,4,5,6,7,8,9,12,13,14,15],[10,11],[16]]
         #interpPriorities = [[0,1,2,3,4,5,6,7,8,9,10]]
-        
-        # Priority groups for the element regularization. 
+
+        # Priority groups for the element regularization.
         # By default, uses all material numbers simultaneously
         regPriorities = get_priorities(
             hex_scene.hexblender_properties.reg_priorities)
@@ -1319,23 +1319,23 @@ def compute_write_hermite_3d_derivs(context, filename = None):
         #regPriorities = [[0,1,2,3,4,5,6,7,8,9,12,13,14,15],[10,11],[16]]
         #regPriorities = [[0,1,2,3,4,5,6,7,8,9,10]]
 
-        splinePriorities = get_priorities(
-            hex_scene.hexblender_properties.spline_priorities)
+        #splinePriorities = get_priorities(hex_scene.hexblender_properties.spline_priorities)
 
         # Example settings
+        splinePriorities = [[0, 1], [2, 3, 4, 5]]
         #splinePriorities = [[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16]]
         #splinePriorities = [[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10]]
         #splinePriorities = [np.unique(matList).tolist()] # default
-        
+
         MatListSubdivOnce = []
         for val in matList:
             MatListSubdivOnce.extend([val, val, val, val, val, val, val, val])
         MatListSubdivTwice = []
         for val in MatListSubdivOnce:
             MatListSubdivTwice.extend([val, val, val, val, val, val, val, val])
-        
+
         # options for HexInterpSubdiv:
-        # 1) break into topology regions, 
+        # 1) break into topology regions,
         # 2) thin plate spline mapping
         print("starting first subdivision!")
 
@@ -1348,8 +1348,8 @@ def compute_write_hermite_3d_derivs(context, filename = None):
             eN, nN = hex_interp_subdiv(cubes,
                                        n,
                                        MatList=matList,
-                                       priorities=interpPriorities, 
-                                       thinPlateMapping=True, 
+                                       priorities=interpPriorities,
+                                       thinPlateMapping=True,
                                        thinPlateRegions=splinePriorities)
             print("starting second subdivision!")
             eNN, nNN = hex_interp_subdiv(eN,
@@ -1361,8 +1361,8 @@ def compute_write_hermite_3d_derivs(context, filename = None):
             eN, nN = hex_interp_subdiv_no_priorities(cubes,
                                        n,
                                        MatList=matList,
-                                       priorities=interpPriorities, 
-                                       thinPlateMapping=True, 
+                                       priorities=interpPriorities,
+                                       thinPlateMapping=True,
                                        thinPlateRegions=splinePriorities)
             print("starting second subdivision!")
             eNN, nNN = hex_interp_subdiv_no_priorities(eN,
@@ -1372,39 +1372,39 @@ def compute_write_hermite_3d_derivs(context, filename = None):
         else:
             print("!! Invalid subdivision type: %s" % subdiv_type)
             return
-        
+
         #cache result (eNN and MatListSubdivTwice)
         cubes_normal, newfaces, newverts = get_boundary_data(eNN)
-        # I am perplexed as to why, but I have to turn cubes_normal into 
-        # an array (then I turn it back into a list) 
-        # or else the IDProperty type chokes 
+        # I am perplexed as to why, but I have to turn cubes_normal into
+        # an array (then I turn it back into a list)
+        # or else the IDProperty type chokes
         #cache_data(np.array(cubes_normal).tolist(),MatListSubdivTwice)
 
         if itt > 0:
-            # regularize the mesh piecewise. If 
-            # priorities = [np.unique(HexMat).tolist()] (the default), 
-            # this executes once flip the priorities list so that the 
+            # regularize the mesh piecewise. If
+            # priorities = [np.unique(HexMat).tolist()] (the default),
+            # this executes once flip the priorities list so that the
             # last list executes first, and the first list executes last
             regPriorities.reverse()
-            
+
             for priority_group in regPriorities:
-                
+
                 #pick out the hexes for the base mesh
                 currHexesInMatlGrp = np.array([ind for ind,val in enumerate(matList) if val in priority_group])
                 cubes_group = np.array(cubes).copy()
                 cubes_group = cubes_group[np.array(currHexesInMatlGrp),:].tolist()
-                
+
                 allVertInds = np.unique(np.array(cubes_group[:]).flatten())
                 allVertIndsSet = set(allVertInds)
                 isVertIncluded = np.array([vert in allVertIndsSet for vert in range(n.shape[0])])
                 vertSelectionMap = np.cumsum(isVertIncluded)-1
-                
+
                 verts_array = np.zeros([np.shape(allVertInds)[0],3])
                 for ind,val in enumerate(verts_array):
                     verts_array[ind,0] = n[allVertInds[ind],0]
                     verts_array[ind,1] = n[allVertInds[ind],1]
                     verts_array[ind,2] = n[allVertInds[ind],2]
-                
+
                 cubes_reduced = vertSelectionMap[np.array(cubes_group)]
                 cubes_trans = np.zeros(np.shape(cubes_reduced),'int32')
                 for ind,cube in enumerate(cubes_reduced):
@@ -1416,25 +1416,25 @@ def compute_write_hermite_3d_derivs(context, filename = None):
                     cubes_trans[ind,5] = cube[5]
                     cubes_trans[ind,6] = cube[7]
                     cubes_trans[ind,7] = cube[6]
-                
+
                 #pick out the hexes for the twice-subdivided mesh
                 currHexesInMatlGrpTwSub = np.array([ind for ind,val in enumerate(MatListSubdivTwice) if val in priority_group])
                 cubes_groupTwSub = eNN.copy()
                 cubes_groupTwSub = cubes_groupTwSub[np.array(currHexesInMatlGrpTwSub),:].tolist()
-                
+
                 allVertIndsTwSub = np.unique(np.array(cubes_groupTwSub[:]).flatten())
                 allVertIndsTwSubSet = set(allVertIndsTwSub)
                 isVertIncludedTwSub = np.array([vert in allVertIndsTwSubSet for vert in range(np.shape(nNN)[0])])
                 vertSelectionMapTwSub = np.cumsum(isVertIncludedTwSub)-1
-                
+
                 verts_arrayTwSub = np.zeros([np.shape(allVertIndsTwSub)[0],3])
                 for ind,val in enumerate(verts_arrayTwSub):
                     verts_arrayTwSub[ind,0] = nNN[allVertIndsTwSub[ind],0]
                     verts_arrayTwSub[ind,1] = nNN[allVertIndsTwSub[ind],1]
                     verts_arrayTwSub[ind,2] = nNN[allVertIndsTwSub[ind],2]
-                
+
                 cubes_reducedTwSub = vertSelectionMapTwSub[np.array(cubes_groupTwSub)]
-                
+
                 nNNReg_reduced =\
                    regularize_elements_vect(cubes_reduced,
                                             verts_array,
@@ -1442,12 +1442,12 @@ def compute_write_hermite_3d_derivs(context, filename = None):
                                             verts_arrayTwSub,
                                             itt,
                                             immobilizeRidges=False)
-    
+
                 for ind,vert_num in enumerate(allVertIndsTwSub):
                     nNN[vert_num,0] = nNNReg_reduced[ind,0]
                     nNN[vert_num,1] = nNNReg_reduced[ind,1]
                     nNN[vert_num,2] = nNNReg_reduced[ind,2]
-        
+
         # Do we keep coarse mesh?
         existing_mats = get_mats_used_unused_sorted(mesh)
         mesh_name = bpy.context.active_object.name
@@ -1461,7 +1461,7 @@ def compute_write_hermite_3d_derivs(context, filename = None):
 
         # show the new mesh and cache it
         print("Updating view.")
-        context.scene.objects.active = context.scene.objects.active 
+        context.scene.objects.active = context.scene.objects.active
         cache_data(np.array(cubes_normal).tolist(),MatListSubdivTwice)
 
     if (useExistingNodes):
@@ -1540,11 +1540,11 @@ def compute_write_hermite_3d_derivs(context, filename = None):
     return {'FINISHED'}, deriv_string
 
 def write_out_2d_elements(filename = None):
-    # WARNING - HARMONIZE QUAD IS NOT CALLED HERE, AND CONTIGUOUS 
+    # WARNING - HARMONIZE QUAD IS NOT CALLED HERE, AND CONTIGUOUS
     # REGIONS WILL NOT, IN GENERAL, SHARE TOPOLOGIES
-    # I DO THIS BECAUSE I WANT TO BE CONSISTENT WITH THE NODAL 
+    # I DO THIS BECAUSE I WANT TO BE CONSISTENT WITH THE NODAL
     # POSITIONS READ BY BICUBIC HERMITE EXPORT RIGHT NOW
-    
+
     mesh, orig_mode = get_active_mesh()
     faces = mesh.polygons
     verts = mesh.vertices
@@ -1557,7 +1557,7 @@ def write_out_2d_elements(filename = None):
             face_verts.append(face.vertices[i])
         faces_verts.append(face_verts)
         matGroup.append(face.material_index)
-    
+
     matGroup = contiguous_regions(faces_verts, matGroup)
 
     #write headers
@@ -1606,7 +1606,7 @@ def compute_write_hermite_2d_derivs(context, filename = None):
             dfile = open(filename, 'w')
             dfile.write(deriv_string)
             dfile.close()
-            print("Successfully exported %s" % filename) 
+            print("Successfully exported %s" % filename)
             return None
         else:
             return deriv_string
@@ -1648,14 +1648,14 @@ def eig_s(data):
     l, v = np.linalg.eig(data)
 
     # add sort function to make conventionally sorted vectors and
-    # values (Continuity's convention); 
+    # values (Continuity's convention);
     # smallest (l(1)) to largest (l(3)) in eigenvalues
     # need to sort negative eigenvalues in descending order and positive in ascending order
-    
+
     i_s = l.argsort()
     l_s = np.sort(abs(l))
     ld = np.diag(l)
-        
+
     l_s = np.diag(ld[i_s])
     v_s = v[:,i_s]
 
@@ -1679,31 +1679,31 @@ def read_tensor_data_file(filename):
     size_y = 100;
     size_z = 100;
 
-    dt_data[0,0,:] = data[:,4] 
-    dt_data[0,1,:] = data[:,5] 
-    dt_data[0,2,:] = data[:,7] 
-    dt_data[1,0,:] = data[:,5] 
+    dt_data[0,0,:] = data[:,4]
+    dt_data[0,1,:] = data[:,5]
+    dt_data[0,2,:] = data[:,7]
+    dt_data[1,0,:] = data[:,5]
     dt_data[1,1,:] = data[:,6]
-    dt_data[1,2,:] = data[:,8] 
-    dt_data[2,0,:] = data[:,7] 
-    dt_data[2,1,:] = data[:,8] 
+    dt_data[1,2,:] = data[:,8]
+    dt_data[2,0,:] = data[:,7]
+    dt_data[2,1,:] = data[:,8]
     dt_data[2,2,:] = data[:,9]
 
-    coords[:,0] = data[:,1] * xres; 
-    coords[:,1] = data[:,2] * yres; 
+    coords[:,0] = data[:,1] * xres;
+    coords[:,1] = data[:,2] * yres;
     coords[:,2] = data[:,3] * zres;
 
-    es[:,0] = data[:,12] 
-    es[:,1] = data[:,11] 
+    es[:,0] = data[:,12]
+    es[:,1] = data[:,11]
     es[:,2] = data[:,10]
 
-    vs[0,2,:] = data[:,13] 
+    vs[0,2,:] = data[:,13]
     vs[1,2,:] = data[:,14]
     vs[2,2,:] = data[:,15]
-    vs[0,1,:] = data[:,16] 
+    vs[0,1,:] = data[:,16]
     vs[1,1,:] = data[:,17]
     vs[2,1,:] = data[:,18]
-    vs[0,0,:] = data[:,19] 
+    vs[0,0,:] = data[:,19]
     vs[1,0,:] = data[:,20]
     vs[2,0,:] = data[:,21]
 
@@ -1711,33 +1711,33 @@ def read_tensor_data_file(filename):
 
 def data_dt_form(filename, coords, data):
     '''
-    dataDTform(FILE,COORDS,D) writes an output text file named FILE 
-    with the diffusion tensors D and their spatial coordinates into a 
+    dataDTform(FILE,COORDS,D) writes an output text file named FILE
+    with the diffusion tensors D and their spatial coordinates into a
     file suitably formatted for rendering in Continuity.
     Input arguments:
        FILE is the path to the output file.
-       COORDS is a nx3 array of the x,y,z Cartesian coordinates of 
+       COORDS is a nx3 array of the x,y,z Cartesian coordinates of
        n diffusion tensors.
        D is a 3x3xn array of the diffusion tensor data to be rendered.
 
-    The output FILE is to be imported into Continuity using 
+    The output FILE is to be imported into Continuity using
     Mesh->Render->Raw Diffusion Tensors.
     In the 'Render Raw Tensors Form' popup menu:
        1. Set the path to FILE in 'File Name:'.
        2. Select 'Data from: FILE' radio button.
-       3. Ignore 'X Slice(s)', 'Y Slice(s)', 'Z slice(s)', 
+       3. Ignore 'X Slice(s)', 'Y Slice(s)', 'Z slice(s)',
           and 'Tensor thinning factor'.
-       4. Set eigenvalue scaling to appropriate value. 
-          For COORDS in cm, use ~0.1; for COORDS in mm, use ~0.01; 
+       4. Set eigenvalue scaling to appropriate value.
+          For COORDS in cm, use ~0.1; for COORDS in mm, use ~0.01;
           for COORDS in um, use ~0.001.
-       5. 'Superquadric squareness factor' controls the sharpness 
-          of the edges of the rendered glyphs; lower values produce 
-          glyphs with soft/round edges; higher values produce glyphs 
+       5. 'Superquadric squareness factor' controls the sharpness
+          of the edges of the rendered glyphs; lower values produce
+          glyphs with soft/round edges; higher values produce glyphs
           with sharper and squarer edges.
        6. Check 'Normalize eigenvalues'.
-       7. Set 'Coloring' to 'Fractional anisotropy'. This setting 
-          actually colors the tensors by the x-component 
-          (red Continuity axis) of the primary eigenvector to 
+       7. Set 'Coloring' to 'Fractional anisotropy'. This setting
+          actually colors the tensors by the x-component
+          (red Continuity axis) of the primary eigenvector to
            illustrate the longitudinal/horizontal orientation of the glyph.
        8. Click 'OK' to render.
     '''
@@ -1752,11 +1752,11 @@ def data_dt_form(filename, coords, data):
     # was test.out
     np.savetxt(filename, (np.transpose([coords.squeeze()[:,0], coords.squeeze()[:,1], coords.squeeze()[:,2],
               data[0,0,:].squeeze(), data[1,1,:].squeeze(), data[2,2,:].squeeze(),
-              data[0,1,:].squeeze(), data[0,2,:].squeeze(), data[1,2,:].squeeze(), np_labels])), 
+              data[0,1,:].squeeze(), data[0,2,:].squeeze(), data[1,2,:].squeeze(), np_labels])),
               fmt=fmt_str, delimiter='\t', header=data_hdr, comments='')
 
     print("Wrote out data to: %s" % filename)
-    
+
 def adjust_list(in_list, x, y):
     return [[old_x + x, old_y + y] for (old_x, old_y) in in_list]
 
@@ -1938,7 +1938,7 @@ def parse_list(listStr):   #utility function parses string to listStr delimiting
         else:
             try:
                 sd.append(int(i))
-            except: 
+            except:
                 raise ParseListError
     return sd
 
@@ -1957,13 +1957,13 @@ def get_mats_used_unused_sorted(mesh):
     '''
     This will return all the currently defined material OBJECTs, but will
     sort them by usage.  Meaning, all the matls at the beginning of the list
-    are actually used by elements within the mesh, whereas the ones at 
+    are actually used by elements within the mesh, whereas the ones at
     the end are not and have simply been defined.
     '''
 
     # Go through all the faces and get the index of the material used
     # I'm certainly open to finding other ways to know which elements
-    # of a mesh belong to a given material, but this is the best I 
+    # of a mesh belong to a given material, but this is the best I
     # could find at the moment
     now = time.time()
     used_mat_index = [face.material_index for face in mesh.polygons]
@@ -1984,7 +1984,7 @@ def get_mats_used_unused_sorted(mesh):
         if mat.name in used_mat_names:
             used_mat_objs.append(mat)
         else:
-            unused_mat_objs.append(mat) 
+            unused_mat_objs.append(mat)
 
     used_mat_objs.extend(unused_mat_objs)
     print("Found used materials in: %f" % ((time.time() - now)))
